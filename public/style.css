@@ -23,6 +23,7 @@ body {
   background-color: #f5f7fa;
   color: var(--dark);
   direction: rtl;
+  min-height: 100vh;
 }
 
 .container {
@@ -125,9 +126,49 @@ body {
   background: var(--primary-dark);
 }
 
+.card {
+  background: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.list {
+  list-style: none;
+  margin-top: 15px;
+}
+
+.list-item {
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s;
+}
+
+.list-item:hover {
+  background-color: #f8f9fa;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
 .alert {
   padding: 15px;
-  margin-top: 20px;
+  margin: 15px 0;
   border-radius: 4px;
 }
 
@@ -143,29 +184,6 @@ body {
   border: 1px solid #f5c6cb;
 }
 
-.list {
-  list-style: none;
-  margin-top: 15px;
-}
-
-.list-item {
-  padding: 12px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-}
-
-.info-card {
-  background: var(--light);
-  padding: 15px;
-  border-radius: 8px;
-  margin-top: 15px;
-}
-
-.hidden {
-  display: none !important;
-}
-
 @media (max-width: 768px) {
   .container {
     padding: 10px;
@@ -179,4 +197,55 @@ body {
   .tab-content {
     padding: 20px;
   }
+}
+#codeResult {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  border: 1px solid #dee2e6;
+}
+
+#codeResult h4 {
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+
+#codeResult p {
+  margin-bottom: 5px;
+}
+
+#codeResult .note {
+  font-size: 0.9em;
+  color: var(--gray);
+  margin-top: 10px;
+  font-style: italic;
+}
+.child-item {
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.child-info {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.child-name {
+  font-weight: bold;
+  min-width: 120px;
+}
+
+.child-id, .child-date {
+  font-size: 0.85em;
+  color: #6c757d;
+}
+
+.no-children {
+  text-align: center;
+  color: #6c757d;
+  padding: 20px;
 }

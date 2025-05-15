@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
       validator: function(v) {
         return /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FFa-zA-Z0-9_]+$/.test(v);
       },
-      message: 'يمكن استخدام الأحرف العربية/الإنجليزية والأرقام والشرطة السفلية (_) فقط'
+      message: 'اسم المستخدم يمكن أن يحتوي على أحرف عربية/إنجليزية وأرقام وشرطة سفلية (_) فقط'
     }
   },
   password: {
@@ -34,10 +34,15 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  children: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
+  // children: [{
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: 'User'
+  // }]
+  // تأكد من أن تعريف children صحيح
+children: [{
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'User'
+}],
   createdAt: {
     type: Date,
     default: Date.now

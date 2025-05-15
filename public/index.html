@@ -69,34 +69,66 @@
       
       <!-- لوحة الأب -->
       <div class="tab-content" id="parent" data-auth="parent">
-        <h2><i class="fas fa-user-tie"></i> لوحة الأب</h2>
-        <div class="form-group">
-          <button id="generateCodeBtn" class="btn">
-            <i class="fas fa-qrcode"></i> إنشاء كود ربط
-          </button>
+        <div class="user-info">
+          <i class="fas fa-user-tie"></i>
+          <div class="user-details">
+            <h3 id="parentUsername">مرحباً بالأب</h3>
+            <p id="parentId"></p>
+          </div>
         </div>
-        <div id="codeResult"></div>
         
-        <h3><i class="fas fa-child"></i> الأبناء المرتبطين</h3>
-        <ul id="childrenList" class="list"></ul>
+        <div class="card">
+          <h3><i class="fas fa-qrcode"></i> إنشاء كود ربط</h3>
+          <button id="generateCodeBtn" class="btn">
+            <i class="fas fa-plus-circle"></i> إنشاء كود جديد
+          </button>
+          <div id="codeResult" class="result-container"></div>
+        </div>
+        
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-child"></i> الأبناء المرتبطين</h3>
+            <button id="refreshChildrenBtn" class="btn-refresh">
+              <i class="fas fa-sync-alt"></i> تحديث
+            </button>
+          </div>
+          <ul id="childrenList" class="list">
+            <li class="list-item no-children">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span>جارٍ تحميل البيانات...</span>
+            </li>
+          </ul>
+        </div>
       </div>
       
       <!-- لوحة الابن -->
       <div class="tab-content" id="child" data-auth="child">
-        <h2><i class="fas fa-user"></i> لوحة الابن</h2>
-        <form id="linkParentForm">
-          <div class="form-group">
-            <label for="linkCode">كود الربط</label>
-            <input type="text" id="linkCode" name="code" class="form-control" placeholder="أدخل كود الربط" required>
+        <div class="user-info">
+          <i class="fas fa-user"></i>
+          <div class="user-details">
+            <h3 id="childUsername">مرحباً بالابن</h3>
+            <p id="childId"></p>
           </div>
-          <button type="submit" class="btn">
-            <i class="fas fa-link"></i> ربط بالأب
-          </button>
-        </form>
-        <div id="linkResult"></div>
+        </div>
         
-        <h3><i class="fas fa-info-circle"></i> معلومات الأب</h3>
-        <div id="parentInfo"></div>
+        <div class="card">
+          <h3><i class="fas fa-link"></i> ربط الحساب بالأب</h3>
+          <form id="linkParentForm">
+            <div class="form-group">
+              <label for="linkCode">كود الربط</label>
+              <input type="text" id="linkCode" name="code" class="form-control" placeholder="أدخل كود الربط" required>
+            </div>
+            <button type="submit" class="btn">
+              <i class="fas fa-paper-plane"></i> تأكيد الربط
+            </button>
+          </form>
+          <div id="linkResult" class="result-container"></div>
+        </div>
+        
+        <div class="card" id="parentInfoCard" style="display: none;">
+          <h3><i class="fas fa-info-circle"></i> معلومات الأب</h3>
+          <div id="parentInfo"></div>
+        </div>
       </div>
     </main>
   </div>
