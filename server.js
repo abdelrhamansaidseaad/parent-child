@@ -1,17 +1,16 @@
+const express = require('express');
+const path = require('path');
 const app = require('./app');
+
+// خدمة الملفات الثابتة
+app.use(express.static(path.join(__dirname, 'public')));
+
+// جميع المسارات الأخرى تخدم index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 const PORT = process.env.PORT || 3000;
-
-const server = app.listen(PORT, () => {
-  console.log(`الخادم يعمل على المنفذ ${PORT}...`);
-});
-
-// معالجة الأخطاء غير الملتقطة
-process.on('unhandledRejection', (err) => {
-  console.error('حدث خطأ غير معالج:', err.name, err.message);
-  server.close(() => process.exit(1));
-});
-
-process.on('uncaughtException', (err) => {
-  console.error('حدث استثناء غير معالج:', err.name, err.message);
-  server.close(() => process.exit(1));
+app.listen(PORT, () => {
+  console.log(`الخادم يعمل على المنفذ ${PORT}`);
 });
