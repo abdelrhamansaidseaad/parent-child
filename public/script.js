@@ -1,91 +1,67 @@
-// تحديد رابط API الأساسي ديناميكيًا
-const API_BASE = window.location.origin.includes('localhost') 
-  ? 'http://localhost:3000/api/v1' 
-  : `${window.location.origin}/api/v1`;
-
 document.addEventListener('DOMContentLoaded', function() {
   // حالة التطبيق
-  const appState = {
-    token: localStorage.getItem('token'),
-    user: JSON.parse(localStorage.getItem('user'))
+  const state = {
+    token: localStorage.getItem('token') || null,
+    user: JSON.parse(localStorage.getItem('user')) || null
   };
 
   // عناصر DOM
   const elements = {
+    tabs: document.querySelectorAll('.tab-btn'),
+    tabContents: document.querySelectorAll('.tab-content'),
     registerForm: document.getElementById('registerForm'),
     loginForm: document.getElementById('loginForm'),
-    linkParentForm: document.getElementById('linkParentForm'),
-    registerUsername: document.getElementById('registerUsername'),
-    registerPassword: document.getElementById('registerPassword'),
-    registerRole: document.getElementById('registerRole'),
-    loginUsername: document.getElementById('loginUsername'),
-    loginPassword: document.getElementById('loginPassword'),
-    linkCode: document.getElementById('linkCode'),
     generateCodeBtn: document.getElementById('generateCodeBtn'),
+    linkParentForm: document.getElementById('linkParentForm'),
     logoutBtn: document.getElementById('logoutBtn'),
-    registerResult: document.getElementById('registerResult'),
-    loginResult: document.getElementById('loginResult'),
-    codeResult: document.getElementById('codeResult'),
-    linkResult: document.getElementById('linkResult'),
     childrenList: document.getElementById('childrenList'),
-    parentInfo: document.getElementById('parentInfo'),
-    tabs: document.querySelectorAll('.tab-btn'),
-    tabContents: document.querySelectorAll('.tab-content')
+    parentInfo: document.getElementById('parentInfo')
   };
 
   // تهيئة التطبيق
   function init() {
     setupEventListeners();
     updateUI();
-    validateInputs();
     
-    if (appState.user) {
-      loadUserData();
+    if (state.user) {
+      if (state.user.role === 'parent') {
+        loadParentData();
+      } else {
+        loadChildData();
+      }
     }
   }
 
   // إعداد مستمعي الأحداث
   function setupEventListeners() {
-    // أحداث التبويبات
+    // تبديل التبويبات
     elements.tabs.forEach(tab => {
       tab.addEventListener('click', switchTab);
     });
 
-    // أحداث النماذج
+    // تسجيل مستخدم جديد
     if (elements.registerForm) {
       elements.registerForm.addEventListener('submit', handleRegister);
     }
-    
+
+    // تسجيل الدخول
     if (elements.loginForm) {
       elements.loginForm.addEventListener('submit', handleLogin);
     }
-    
-    if (elements.linkParentForm) {
-      elements.linkParentForm.addEventListener('submit', handleLinkParent);
-    }
 
-    // أحداث الأزرار
+    // إنشاء كود ربط
     if (elements.generateCodeBtn) {
       elements.generateCodeBtn.addEventListener('click', generateCode);
     }
-    
+
+    // ربط بالأب
+    if (elements.linkParentForm) {
+      elements.linkParentForm.addEventListener('submit', linkToParent);
+    }
+
+    // تسجيل الخروج
     if (elements.logoutBtn) {
       elements.logoutBtn.addEventListener('click', handleLogout);
-    }
-  }
-
-  // التحقق من صحة المدخلات
-  function validateInputs() {
-    // التحقق من اسم المستخدم
-    if (elements.registerUsername) {
-      elements.registerUsername.addEventListener('input', function() {
-        this.value = this.value.trim();
-        const arabicLetters = /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FFa-zA-Z0-9_]+$/;
-        if (!arabicLetters.test(this.value)) {
-          showAlert('مسموح فقط بالأحرف العربية/الإنجليزية والأرقام والشرطة السفلية', 'error', 'usernameError');
-          this.value = this.value.replace(/[^\u0600-\u06FF\u0750-\u077F\u08A0-\u08FFa-zA-Z0-9_]/g, '');
-        }
-      });
     }
   }
 
@@ -103,37 +79,32 @@ document.addEventListener('DOMContentLoaded', function() {
   // تسجيل مستخدم جديد
   async function handleRegister(e) {
     e.preventDefault();
-    const username = elements.registerUsername.value.trim();
-    const password = elements.registerPassword.value;
-    const role = elements.registerRole.value;
+    const formData = new FormData(e.target);
+    const data = {
+      username: formData.get('username').trim(),
+      password: formData.get('password'),
+      role: formData.get('role')
+    };
 
     try {
-      const response = await fetch(`${API_BASE}/auth/register`, {
+      const response = await fetch('/api/v1/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ username, password, role })
+        body: JSON.stringify(data)
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || 'حدث خطأ أثناء التسجيل');
+      if (response.ok) {
+        showAlert('تم تسجيل المستخدم بنجاح', 'success', 'registerResult');
+        e.target.reset();
+      } else {
+        showAlert(result.message || 'حدث خطأ أثناء التسجيل', 'error', 'registerResult');
       }
-
-      // حفظ حالة المستخدم
-      appState.token = data.token;
-      appState.user = data.data.user;
-      saveAuthState();
-      
-      showAlert('تم التسجيل بنجاح!', 'success', 'registerResult');
-      elements.registerForm.reset();
-      updateUI();
-      loadUserData();
-
     } catch (error) {
-      showAlert(error.message, 'error', 'registerResult');
+      showAlert('حدث خطأ في الاتصال بالخادم', 'error', 'registerResult');
       console.error('Registration error:', error);
     }
   }
@@ -141,36 +112,44 @@ document.addEventListener('DOMContentLoaded', function() {
   // تسجيل الدخول
   async function handleLogin(e) {
     e.preventDefault();
-    const username = elements.loginUsername.value.trim();
-    const password = elements.loginPassword.value;
+    const formData = new FormData(e.target);
+    const data = {
+      username: formData.get('username').trim(),
+      password: formData.get('password')
+    };
 
     try {
-      const response = await fetch(`${API_BASE}/auth/login`, {
+      const response = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify(data)
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || 'بيانات الاعتماد غير صحيحة');
+      if (response.ok) {
+        state.token = result.token;
+        state.user = result.data.user;
+        
+        localStorage.setItem('token', state.token);
+        localStorage.setItem('user', JSON.stringify(state.user));
+        
+        showAlert('تم تسجيل الدخول بنجاح', 'success', 'loginResult');
+        e.target.reset();
+        updateUI();
+        
+        if (state.user.role === 'parent') {
+          loadParentData();
+        } else {
+          loadChildData();
+        }
+      } else {
+        showAlert(result.message || 'بيانات الدخول غير صحيحة', 'error', 'loginResult');
       }
-
-      // حفظ حالة المستخدم
-      appState.token = data.token;
-      appState.user = data.data.user;
-      saveAuthState();
-      
-      showAlert('تم تسجيل الدخول بنجاح!', 'success', 'loginResult');
-      elements.loginForm.reset();
-      updateUI();
-      loadUserData();
-
     } catch (error) {
-      showAlert(error.message, 'error', 'loginResult');
+      showAlert('حدث خطأ في الاتصال بالخادم', 'error', 'loginResult');
       console.error('Login error:', error);
     }
   }
@@ -178,183 +157,137 @@ document.addEventListener('DOMContentLoaded', function() {
   // إنشاء كود ربط
   async function generateCode() {
     try {
-      if (!appState.token) {
-        throw new Error('يجب تسجيل الدخول أولاً');
-      }
-
-      const response = await fetch(`${API_BASE}/parent/generate-code`, {
+      const response = await fetch('/api/v1/parent/generate-code', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${appState.token}`,
+          'Authorization': `Bearer ${state.token}`,
           'Content-Type': 'application/json'
         }
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || 'حدث خطأ أثناء إنشاء الكود');
+      if (response.ok) {
+        showAlert(`كود الربط: <strong>${result.data.code}</strong><br>هذا الكود صالح لمدة ساعة`, 'success', 'codeResult');
+      } else {
+        showAlert(result.message || 'حدث خطأ أثناء إنشاء الكود', 'error', 'codeResult');
       }
-
-      // عرض الكود للمستخدم
-      elements.codeResult.innerHTML = `
-        <div class="alert success">
-          <h4>كود الربط:</h4>
-          <div class="code">${data.data.code}</div>
-          <p>صلاحيته حتى: ${new Date(data.data.expiresAt).toLocaleString()}</p>
-        </div>
-      `;
-
     } catch (error) {
-      elements.codeResult.innerHTML = `
-        <div class="alert error">${error.message}</div>
-      `;
+      showAlert('حدث خطأ في الاتصال بالخادم', 'error', 'codeResult');
       console.error('Generate code error:', error);
     }
   }
 
-  // ربط الابن بالأب
-  async function handleLinkParent(e) {
+  // ربط بالأب
+  async function linkToParent(e) {
     e.preventDefault();
-    const code = elements.linkCode.value.trim();
+    const code = e.target.code.value;
 
     try {
-      if (!appState.token) {
-        throw new Error('يجب تسجيل الدخول أولاً');
-      }
-
-      const response = await fetch(`${API_BASE}/child/link-parent`, {
+      const response = await fetch('/api/v1/child/link-parent', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${appState.token}`,
+          'Authorization': `Bearer ${state.token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ code })
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || 'كود الربط غير صالح');
+      if (response.ok) {
+        showAlert(`تم الربط بنجاح مع الأب (ID: ${result.data.parentId})`, 'success', 'linkResult');
+        e.target.reset();
+        loadChildData();
+      } else {
+        showAlert(result.message || 'كود الربط غير صالح', 'error', 'linkResult');
       }
-
-      showAlert(`تم الربط بنجاح مع الأب: ${data.parent.username}`, 'success', 'linkResult');
-      elements.linkParentForm.reset();
-      loadUserData();
-
     } catch (error) {
-      showAlert(error.message, 'error', 'linkResult');
-      console.error('Link parent error:', error);
+      showAlert('حدث خطأ في الاتصال بالخادم', 'error', 'linkResult');
+      console.error('Link to parent error:', error);
     }
   }
 
   // تسجيل الخروج
   function handleLogout() {
-    appState.token = null;
-    appState.user = null;
-    clearAuthState();
-    
-    showAlert('تم تسجيل الخروج بنجاح', 'success', 'loginResult');
+    state.token = null;
+    state.user = null;
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     updateUI();
-  }
-
-  // تحميل بيانات المستخدم حسب الدور
-  async function loadUserData() {
-    if (!appState.user) return;
-    
-    if (appState.user.role === 'parent') {
-      await loadParentData();
-    } else {
-      await loadChildData();
-    }
+    showAlert('تم تسجيل الخروج بنجاح', 'success', 'loginResult');
+    switchToTab('login');
   }
 
   // تحميل بيانات الأب
   async function loadParentData() {
     try {
-      const response = await fetch(`${API_BASE}/parent/profile`, {
+      const response = await fetch('/api/v1/parent/profile', {
         headers: {
-          'Authorization': `Bearer ${appState.token}`
+          'Authorization': `Bearer ${state.token}`
         }
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
-      if (response.ok) {
-        renderChildrenList(data.data.user.children || []);
+      if (response.ok && elements.childrenList) {
+        elements.childrenList.innerHTML = '';
+        
+        if (result.data.children && result.data.children.length > 0) {
+          result.data.children.forEach(child => {
+            const li = document.createElement('li');
+            li.className = 'list-item';
+            li.innerHTML = `
+              <span>${child.username}</span>
+              <span>ID: ${child._id}</span>
+            `;
+            elements.childrenList.appendChild(li);
+          });
+        } else {
+          elements.childrenList.innerHTML = '<li class="list-item">لا يوجد أبناء مرتبطين</li>';
+        }
       }
-
     } catch (error) {
-      console.error('Failed to load parent data:', error);
+      console.error('Error loading parent data:', error);
     }
   }
 
   // تحميل بيانات الابن
   async function loadChildData() {
     try {
-      const response = await fetch(`${API_BASE}/child/profile`, {
+      const response = await fetch('/api/v1/child/profile', {
         headers: {
-          'Authorization': `Bearer ${appState.token}`
+          'Authorization': `Bearer ${state.token}`
         }
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
-      if (response.ok) {
-        renderParentInfo(data.data.parentId);
+      if (response.ok && elements.parentInfo) {
+        if (result.data.parentId) {
+          elements.parentInfo.innerHTML = `
+            <div class="info-card">
+              <h4>معلومات الأب</h4>
+              <p><strong>اسم المستخدم:</strong> ${result.data.parentId.username}</p>
+              <p><strong>ID:</strong> ${result.data.parentId._id}</p>
+            </div>
+          `;
+        } else {
+          elements.parentInfo.innerHTML = '<p>غير مرتبط بأب</p>';
+        }
       }
-
     } catch (error) {
-      console.error('Failed to load child data:', error);
+      console.error('Error loading child data:', error);
     }
   }
 
-  // عرض قائمة الأبناء
-  function renderChildrenList(children) {
-    elements.childrenList.innerHTML = '';
+  // التبديل إلى تبويب معين
+  function switchToTab(tabId) {
+    elements.tabs.forEach(tab => tab.classList.remove('active'));
+    elements.tabContents.forEach(content => content.classList.remove('active'));
     
-    if (children.length === 0) {
-      elements.childrenList.innerHTML = '<li class="list-item">لا يوجد أبناء مرتبطين</li>';
-      return;
-    }
-
-    children.forEach(child => {
-      const li = document.createElement('li');
-      li.className = 'list-item';
-      li.innerHTML = `
-        <span>${child.username}</span>
-        <span>ID: ${child._id}</span>
-      `;
-      elements.childrenList.appendChild(li);
-    });
-  }
-
-  // عرض معلومات الأب
-  function renderParentInfo(parent) {
-    if (!parent) {
-      elements.parentInfo.innerHTML = '<p>غير مرتبط بأب</p>';
-      return;
-    }
-
-    elements.parentInfo.innerHTML = `
-      <div class="info-card">
-        <h4>معلومات الأب</h4>
-        <p><strong>اسم المستخدم:</strong> ${parent.username}</p>
-        <p><strong>ID:</strong> ${parent._id}</p>
-      </div>
-    `;
-  }
-
-  // حفظ حالة المصادقة
-  function saveAuthState() {
-    localStorage.setItem('token', appState.token);
-    localStorage.setItem('user', JSON.stringify(appState.user));
-  }
-
-  // مسح حالة المصادقة
-  function clearAuthState() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+    document.getElementById(tabId).classList.add('active');
   }
 
   // تحديث واجهة المستخدم حسب حالة المصادقة
@@ -363,32 +296,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     authElements.forEach(el => {
       const requiredAuth = el.getAttribute('data-auth');
-      let shouldShow = false;
       
-      switch (requiredAuth) {
-        case 'authenticated':
-          shouldShow = !!appState.user;
-          break;
-        case 'not-authenticated':
-          shouldShow = !appState.user;
-          break;
-        case 'parent':
-          shouldShow = appState.user?.role === 'parent';
-          break;
-        case 'child':
-          shouldShow = appState.user?.role === 'child';
-          break;
+      if (requiredAuth === 'authenticated') {
+        el.style.display = state.user ? 'block' : 'none';
+      } else if (requiredAuth === 'not-authenticated') {
+        el.style.display = state.user ? 'none' : 'block';
+      } else if (requiredAuth === 'parent') {
+        el.style.display = (state.user && state.user.role === 'parent') ? 'block' : 'none';
+      } else if (requiredAuth === 'child') {
+        el.style.display = (state.user && state.user.role === 'child') ? 'block' : 'none';
       }
-      
-      el.style.display = shouldShow ? 'block' : 'none';
     });
   }
 
   // عرض رسائل التنبيه
   function showAlert(message, type, elementId) {
     const alertElement = document.getElementById(elementId);
-    if (!alertElement) return;
-    
     alertElement.innerHTML = `
       <div class="alert alert-${type}">
         ${message}

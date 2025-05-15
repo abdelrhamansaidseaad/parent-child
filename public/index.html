@@ -4,98 +4,101 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نظام ربط الأبناء بالآباء</title>
-  <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <div class="header">
+    <header class="header">
       <h1><i class="fas fa-family"></i> نظام ربط الأبناء بالآباء</h1>
-    </div>
+    </header>
 
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="register">تسجيل جديد</button>
-      <button class="tab-btn" data-tab="login">تسجيل دخول</button>
-      <button class="tab-btn" data-tab="parent" data-auth="parent">لوحة الأب</button>
-      <button class="tab-btn" data-tab="child" data-auth="child">لوحة الابن</button>
-      <button class="tab-btn" id="logoutBtn" data-auth="authenticated">
-        <i class="fas fa-sign-out-alt"></i> تسجيل خروج
-      </button>
-    </div>
-    
-    <!-- تسجيل جديد -->
-    <div class="tab-content active" id="register" data-auth="not-authenticated">
-      <h2><i class="fas fa-user-plus"></i> تسجيل مستخدم جديد</h2>
-      <form id="registerForm">
-        <div class="form-group">
-          <label for="registerUsername">اسم المستخدم</label>
-          <input type="text" id="registerUsername" name="username" class="form-control" required>
-        </div>
-        <div class="form-group">
-          <label for="registerPassword">كلمة المرور</label>
-          <input type="password" id="registerPassword" name="password" class="form-control" required>
-        </div>
-        <div class="form-group">
-          <label for="registerRole">الدور</label>
-          <select id="registerRole" name="role" class="form-control" required>
-            <option value="">اختر الدور</option>
-            <option value="parent">أب</option>
-            <option value="child">ابن</option>
-          </select>
-        </div>
-        <button type="submit" class="btn">تسجيل</button>
-      </form>
-      <div id="registerResult"></div>
-    </div>
-    
-    <!-- تسجيل دخول -->
-    <div class="tab-content" id="login" data-auth="not-authenticated">
-      <h2><i class="fas fa-sign-in-alt"></i> تسجيل دخول</h2>
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="loginUsername">اسم المستخدم</label>
-          <input type="text" id="loginUsername" name="username" class="form-control" required>
-        </div>
-        <div class="form-group">
-          <label for="loginPassword">كلمة المرور</label>
-          <input type="password" id="loginPassword" name="password" class="form-control" required>
-        </div>
-        <button type="submit" class="btn">دخول</button>
-      </form>
-      <div id="loginResult"></div>
-    </div>
-    
-    <!-- لوحة الأب -->
-    <div class="tab-content" id="parent" data-auth="parent">
-      <h2><i class="fas fa-user-tie"></i> لوحة الأب</h2>
-      <div class="form-group">
-        <button id="generateCodeBtn" class="btn">
-          <i class="fas fa-qrcode"></i> إنشاء كود ربط
+    <main class="main-content">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="register">تسجيل جديد</button>
+        <button class="tab-btn" data-tab="login">تسجيل دخول</button>
+        <button class="tab-btn" data-tab="parent" data-auth="parent">لوحة الأب</button>
+        <button class="tab-btn" data-tab="child" data-auth="child">لوحة الابن</button>
+        <button class="tab-btn" id="logoutBtn" data-auth="authenticated">
+          <i class="fas fa-sign-out-alt"></i> تسجيل خروج
         </button>
       </div>
-      <div id="codeResult"></div>
       
-      <h3><i class="fas fa-child"></i> الأبناء المرتبطين</h3>
-      <ul id="childrenList" class="list"></ul>
-    </div>
-    
-    <!-- لوحة الابن -->
-    <div class="tab-content" id="child" data-auth="child">
-      <h2><i class="fas fa-user"></i> لوحة الابن</h2>
-      <form id="linkParentForm">
+      <!-- تسجيل جديد -->
+      <div class="tab-content active" id="register" data-auth="not-authenticated">
+        <h2><i class="fas fa-user-plus"></i> تسجيل مستخدم جديد</h2>
+        <form id="registerForm">
+          <div class="form-group">
+            <label for="registerUsername">اسم المستخدم</label>
+            <input type="text" id="registerUsername" name="username" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="registerPassword">كلمة المرور</label>
+            <input type="password" id="registerPassword" name="password" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="registerRole">الدور</label>
+            <select id="registerRole" name="role" class="form-control" required>
+              <option value="">اختر الدور</option>
+              <option value="parent">أب</option>
+              <option value="child">ابن</option>
+            </select>
+          </div>
+          <button type="submit" class="btn">تسجيل</button>
+        </form>
+        <div id="registerResult"></div>
+      </div>
+      
+      <!-- تسجيل دخول -->
+      <div class="tab-content" id="login" data-auth="not-authenticated">
+        <h2><i class="fas fa-sign-in-alt"></i> تسجيل دخول</h2>
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="loginUsername">اسم المستخدم</label>
+            <input type="text" id="loginUsername" name="username" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">كلمة المرور</label>
+            <input type="password" id="loginPassword" name="password" class="form-control" required>
+          </div>
+          <button type="submit" class="btn">دخول</button>
+        </form>
+        <div id="loginResult"></div>
+      </div>
+      
+      <!-- لوحة الأب -->
+      <div class="tab-content" id="parent" data-auth="parent">
+        <h2><i class="fas fa-user-tie"></i> لوحة الأب</h2>
         <div class="form-group">
-          <label for="linkCode">كود الربط</label>
-          <input type="text" id="linkCode" name="code" class="form-control" placeholder="أدخل كود الربط" required>
+          <button id="generateCodeBtn" class="btn">
+            <i class="fas fa-qrcode"></i> إنشاء كود ربط
+          </button>
         </div>
-        <button type="submit" class="btn">
-          <i class="fas fa-link"></i> ربط بالأب
-        </button>
-      </form>
-      <div id="linkResult"></div>
+        <div id="codeResult"></div>
+        
+        <h3><i class="fas fa-child"></i> الأبناء المرتبطين</h3>
+        <ul id="childrenList" class="list"></ul>
+      </div>
       
-      <h3><i class="fas fa-info-circle"></i> معلومات الأب</h3>
-      <div id="parentInfo"></div>
-    </div>
+      <!-- لوحة الابن -->
+      <div class="tab-content" id="child" data-auth="child">
+        <h2><i class="fas fa-user"></i> لوحة الابن</h2>
+        <form id="linkParentForm">
+          <div class="form-group">
+            <label for="linkCode">كود الربط</label>
+            <input type="text" id="linkCode" name="code" class="form-control" placeholder="أدخل كود الربط" required>
+          </div>
+          <button type="submit" class="btn">
+            <i class="fas fa-link"></i> ربط بالأب
+          </button>
+        </form>
+        <div id="linkResult"></div>
+        
+        <h3><i class="fas fa-info-circle"></i> معلومات الأب</h3>
+        <div id="parentInfo"></div>
+      </div>
+    </main>
   </div>
 
   <script src="script.js"></script>

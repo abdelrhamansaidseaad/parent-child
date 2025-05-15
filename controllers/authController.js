@@ -6,7 +6,7 @@ exports.register = async (req, res, next) => {
   try {
     const { username, password, role } = req.body;
 
-    // تنظيف اسم المستخدم من المسافات الزائدة
+    // تنظيف اسم المستخدم
     const cleanedUsername = username.trim();
 
     // التحقق من عدم وجود مستخدم بنفس الاسم
@@ -32,14 +32,12 @@ exports.register = async (req, res, next) => {
         user: {
           id: newUser._id,
           username: newUser.username,
-          role: newUser.role,
-          createdAt: newUser.createdAt
+          role: newUser.role
         }
       }
     });
 
   } catch (error) {
-    // معالجة أخطاء التحقق من الصحة بشكل خاص
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(el => el.message);
       return next(new AppError(messages.join('. '), 400));
@@ -50,33 +48,22 @@ exports.register = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   try {
-    console.log('بيانات الدخول الواردة:', req.body); // سجل البيانات الواردة
-    
     const { username, password } = req.body;
 
+    // التحقق من وجود البيانات المطلوبة
     if (!username || !password) {
-      console.log('بيانات ناقصة'); // سجل حالة البيانات الناقصة
       return next(new AppError('الرجاء إدخال اسم المستخدم وكلمة المرور', 400));
     }
 
+    // البحث عن المستخدم مع تضمين كلمة المرور
     const user = await User.findOne({ username }).select('+password');
-    console.log('المستخدم الذي تم العثور عليه:', user); // سجل بيانات المستخدم
     
-    if (!user) {
-      console.log('المستخدم غير موجود'); // سجل حالة عدم وجود مستخدم
+    if (!user || !(await user.comparePassword(password))) {
       return next(new AppError('بيانات الاعتماد غير صحيحة', 401));
     }
 
-    console.log('مقارنة كلمة المرور...'); // سجل بدء عملية المقارنة
-    const isMatch = await user.comparePassword(password);
-    console.log('نتيجة المقارنة:', isMatch); // سجل نتيجة المقارنة
-    
-    if (!isMatch) {
-      return next(new AppError('بيانات الاعتماد غير صحيحة', 401));
-    }
-
+    // إنشاء التوكن
     const token = generateToken(user._id, user.role);
-    console.log('تم إنشاء التوكن بنجاح'); // سجل نجاح إنشاء التوكن
 
     res.status(200).json({
       status: 'success',
@@ -91,7 +78,6 @@ exports.login = async (req, res, next) => {
     });
 
   } catch (error) {
-    console.error('تفاصيل الخطأ:', error); // سجل تفاصيل الخطأ
     next(error);
   }
 };

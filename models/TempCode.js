@@ -4,7 +4,7 @@ const shortid = require('shortid');
 const tempCodeSchema = new mongoose.Schema({
   code: {
     type: String,
-    default: () => shortid.generate(), // استخدام دالة لضمان توليد كود جديد لكل مستند
+    default: () => shortid.generate(),
     unique: true
   },
   parentId: {
@@ -19,7 +19,19 @@ const tempCodeSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
-    expires: 3600 // ينتهي بعد ساعة (3600 ثانية)
+    expires: 3600
+  }
+});
+
+tempCodeSchema.pre('save', async function(next) {
+  try {
+    const parent = await mongoose.model('User').findById(this.parentId);
+    if (!parent || parent.role !== 'parent') {
+      throw new Error('Parent user not found or invalid role');
+    }
+    next();
+  } catch (error) {
+    next(error);
   }
 });
 

@@ -28,22 +28,18 @@ app.use(hpp());
 
 // تحديد معدل الطلبات
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100
+  windowMs: 15 * 60 * 1000, // 15 دقيقة
+  max: 100 // 100 طلب لكل IP
 });
 app.use('/api', limiter);
 
 // Middlewares الأساسية
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    `https://${process.env.VERCEL_URL}`,
-    'https://*.vercel.app'
-  ],
+  origin: true,
   credentials: true
 }));
-
 app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -52,19 +48,17 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // الاتصال بقاعدة البيانات
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('تم الاتصال بقاعدة البيانات بنجاح'))
-  .catch(err => console.error('خطأ في الاتصال بقاعدة البيانات:', err));
-
+// الاتصال بقاعدة البيانات (في ملف app.js)
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log('تم الاتصال بقاعدة البيانات بنجاح'))
+.catch(err => console.error('خطأ في الاتصال بقاعدة البيانات:', err));
 // مسارات API
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/parent', parentRoutes);
 app.use('/api/v1/child', childRoutes);
-
-// مسار الواجهة الأمامية
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
 
 // مسار غير معروف
 app.all('*', (req, res, next) => {
