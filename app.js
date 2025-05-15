@@ -34,7 +34,15 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // Middlewares الأساسية
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    `https://${process.env.VERCEL_URL}`,
+    'https://*.vercel.app'
+  ],
+  credentials: true
+}));
+
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -46,15 +54,17 @@ if (process.env.NODE_ENV === 'development') {
 // الاتصال بقاعدة البيانات
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('تم الاتصال بقاعدة البيانات بنجاح'))
-  .catch(err => {
-    console.error('خطأ في الاتصال بقاعدة البيانات:', err);
-    process.exit(1);
-  });
+  .catch(err => console.error('خطأ في الاتصال بقاعدة البيانات:', err));
 
 // مسارات API
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/parent', parentRoutes);
 app.use('/api/v1/child', childRoutes);
+
+// مسار الواجهة الأمامية
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // مسار غير معروف
 app.all('*', (req, res, next) => {

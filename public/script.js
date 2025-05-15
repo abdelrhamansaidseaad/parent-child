@@ -1,3 +1,8 @@
+// تحديد رابط API الأساسي ديناميكيًا
+const API_BASE = window.location.origin.includes('localhost') 
+  ? 'http://localhost:3000/api/v1' 
+  : `${window.location.origin}/api/v1`;
+
 document.addEventListener('DOMContentLoaded', function() {
   // حالة التطبيق
   const appState = {
@@ -7,34 +12,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // عناصر DOM
   const elements = {
-    // النماذج
     registerForm: document.getElementById('registerForm'),
     loginForm: document.getElementById('loginForm'),
     linkParentForm: document.getElementById('linkParentForm'),
-    
-    // حقول الإدخال
     registerUsername: document.getElementById('registerUsername'),
     registerPassword: document.getElementById('registerPassword'),
     registerRole: document.getElementById('registerRole'),
     loginUsername: document.getElementById('loginUsername'),
     loginPassword: document.getElementById('loginPassword'),
     linkCode: document.getElementById('linkCode'),
-    
-    // الأزرار
     generateCodeBtn: document.getElementById('generateCodeBtn'),
     logoutBtn: document.getElementById('logoutBtn'),
-    
-    // مناطق النتائج
     registerResult: document.getElementById('registerResult'),
     loginResult: document.getElementById('loginResult'),
     codeResult: document.getElementById('codeResult'),
     linkResult: document.getElementById('linkResult'),
-    
-    // مناطق البيانات
     childrenList: document.getElementById('childrenList'),
     parentInfo: document.getElementById('parentInfo'),
-    
-    // التبويبات
     tabs: document.querySelectorAll('.tab-btn'),
     tabContents: document.querySelectorAll('.tab-content')
   };
@@ -45,7 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateUI();
     validateInputs();
     
-    // إذا كان المستخدم مسجل الدخول، تحميل البيانات المناسبة
     if (appState.user) {
       loadUserData();
     }
@@ -83,29 +76,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // التحقق من صحة المدخلات
   function validateInputs() {
-    // التحقق من اسم المستخدم أثناء الكتابة
+    // التحقق من اسم المستخدم
     if (elements.registerUsername) {
       elements.registerUsername.addEventListener('input', function() {
         this.value = this.value.trim();
-        validateUsername(this);
+        const arabicLetters = /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FFa-zA-Z0-9_]+$/;
+        if (!arabicLetters.test(this.value)) {
+          showAlert('مسموح فقط بالأحرف العربية/الإنجليزية والأرقام والشرطة السفلية', 'error', 'usernameError');
+          this.value = this.value.replace(/[^\u0600-\u06FF\u0750-\u077F\u08A0-\u08FFa-zA-Z0-9_]/g, '');
+        }
       });
-    }
-    
-    if (elements.loginUsername) {
-      elements.loginUsername.addEventListener('input', function() {
-        this.value = this.value.trim();
-      });
-    }
-  }
-
-  // التحقق من صحة اسم المستخدم
-  function validateUsername(inputElement) {
-    const username = inputElement.value;
-    const arabicLetters = /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FFa-zA-Z0-9_]+$/;
-    
-    if (!arabicLetters.test(username)) {
-      showAlert('مسموح فقط بالأحرف العربية/الإنجليزية والأرقام والشرطة السفلية', 'error', 'usernameError');
-      inputElement.value = username.replace(/[^\u0600-\u06FF\u0750-\u077F\u08A0-\u08FFa-zA-Z0-9_]/g, '');
     }
   }
 
@@ -113,11 +93,9 @@ document.addEventListener('DOMContentLoaded', function() {
   function switchTab(e) {
     const tabId = e.target.getAttribute('data-tab');
     
-    // إزالة النشاط من جميع التبويبات
     elements.tabs.forEach(tab => tab.classList.remove('active'));
     elements.tabContents.forEach(content => content.classList.remove('active'));
     
-    // إضافة النشاط للتبويب المحدد
     e.target.classList.add('active');
     document.getElementById(tabId).classList.add('active');
   }
@@ -130,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const role = elements.registerRole.value;
 
     try {
-      const response = await fetch('/api/v1/auth/register', {
+      const response = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -167,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const password = elements.loginPassword.value;
 
     try {
-      const response = await fetch('/api/v1/auth/login', {
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -199,64 +177,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // إنشاء كود ربط
   async function generateCode() {
-  try {
-    const response = await fetch('/api/v1/parent/generate-code', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
+    try {
+      if (!appState.token) {
+        throw new Error('يجب تسجيل الدخول أولاً');
       }
-    });
 
-    const data = await response.json();
-    
-    if (!response.ok) throw new Error(data.message || 'فشل إنشاء الكود');
+      const response = await fetch(`${API_BASE}/parent/generate-code`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${appState.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-    document.getElementById('codeResult').innerHTML = `
-      <div class="alert success">
-        <h3>كود الربط:</h3>
-        <div class="code">${data.data.code}</div>
-        <p>صلاحيته حتى: ${new Date(data.data.expiresAt).toLocaleString()}</p>
-      </div>
-    `;
-  } catch (error) {
-    document.getElementById('codeResult').innerHTML = `
-      <div class="alert error">${error.message}</div>
-    `;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'حدث خطأ أثناء إنشاء الكود');
+      }
+
+      // عرض الكود للمستخدم
+      elements.codeResult.innerHTML = `
+        <div class="alert success">
+          <h4>كود الربط:</h4>
+          <div class="code">${data.data.code}</div>
+          <p>صلاحيته حتى: ${new Date(data.data.expiresAt).toLocaleString()}</p>
+        </div>
+      `;
+
+    } catch (error) {
+      elements.codeResult.innerHTML = `
+        <div class="alert error">${error.message}</div>
+      `;
+      console.error('Generate code error:', error);
+    }
   }
-}
-
-async function linkParent() {
-  const code = document.getElementById('linkCode').value.trim();
-  
-  try {
-    const response = await fetch('/api/v1/child/link-parent', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ code })
-    });
-
-    const data = await response.json();
-    
-    if (!response.ok) throw new Error(data.message || 'فشل عملية الربط');
-
-    document.getElementById('linkResult').innerHTML = `
-      <div class="alert success">
-        تم الربط بنجاح مع الأب: ${data.parent.username}
-      </div>
-    `;
-    
-    // تحديث واجهة المستخدم
-    loadUserData();
-  } catch (error) {
-    document.getElementById('linkResult').innerHTML = `
-      <div class="alert error">${error.message}</div>
-    `;
-  }
-}
 
   // ربط الابن بالأب
   async function handleLinkParent(e) {
@@ -264,7 +219,11 @@ async function linkParent() {
     const code = elements.linkCode.value.trim();
 
     try {
-      const response = await fetch('/api/v1/child/link-parent', {
+      if (!appState.token) {
+        throw new Error('يجب تسجيل الدخول أولاً');
+      }
+
+      const response = await fetch(`${API_BASE}/child/link-parent`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${appState.token}`,
@@ -279,7 +238,7 @@ async function linkParent() {
         throw new Error(data.message || 'كود الربط غير صالح');
       }
 
-      showAlert(`تم الربط بنجاح مع الأب!`, 'success', 'linkResult');
+      showAlert(`تم الربط بنجاح مع الأب: ${data.parent.username}`, 'success', 'linkResult');
       elements.linkParentForm.reset();
       loadUserData();
 
@@ -312,28 +271,8 @@ async function linkParent() {
 
   // تحميل بيانات الأب
   async function loadParentData() {
-  try {
-    const response = await fetch('/api/v1/parent/profile', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Cache-Control': 'no-cache' // إضافة هذا السطر
-      }
-    });
-
-    const data = await response.json();
-    
-    if (response.ok) {
-      renderChildrenList(data.data.user.children || []);
-    }
-  } catch (error) {
-    console.error('Failed to load parent data:', error);
-  }
-}
-
-  // تحميل بيانات الابن
-  async function loadChildData() {
     try {
-      const response = await fetch('/api/v1/child/profile', {
+      const response = await fetch(`${API_BASE}/parent/profile`, {
         headers: {
           'Authorization': `Bearer ${appState.token}`
         }
@@ -342,7 +281,27 @@ async function linkParent() {
       const data = await response.json();
 
       if (response.ok) {
-        renderParentInfo(data.parentId);
+        renderChildrenList(data.data.user.children || []);
+      }
+
+    } catch (error) {
+      console.error('Failed to load parent data:', error);
+    }
+  }
+
+  // تحميل بيانات الابن
+  async function loadChildData() {
+    try {
+      const response = await fetch(`${API_BASE}/child/profile`, {
+        headers: {
+          'Authorization': `Bearer ${appState.token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        renderParentInfo(data.data.parentId);
       }
 
     } catch (error) {
