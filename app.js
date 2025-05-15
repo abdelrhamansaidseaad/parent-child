@@ -65,4 +65,9 @@ app.all('*', (req, res, next) => {
 // معالجة الأخطاء
 app.use(errorHandler);
 
+// Test route
+app.get('/api/test', (req, res) => {
+  res.json({ message: "API is working!" });
+});
+
 module.exports = app;
