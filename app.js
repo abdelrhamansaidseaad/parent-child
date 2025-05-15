@@ -21,6 +21,12 @@ const childRoutes = require('./routes/childRoutes');
 // تهيئة التطبيق
 const app = express();
 
+// Middleware للتحقق من الطلبات
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 // Middlewares الأمان
 app.use(helmet());
 app.use(mongoSanitize());

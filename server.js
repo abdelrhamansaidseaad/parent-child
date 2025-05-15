@@ -15,7 +15,16 @@
 //   server.close(() => process.exit(1));
 // });
 const app = require('./app');
+const express = require('express');
 const PORT = process.env.PORT || 3000;
+app.get('/api/test', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: '✅ تم إصلاح المسار بنجاح',
+    timestamp: new Date().toISOString()
+  });
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
