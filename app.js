@@ -44,7 +44,8 @@ app.use(cors({
   origin: true,
   credentials: true
 }));
-app.use(express.json({ limit: '10kb' }));
+// { limit: '10kb' } بداخل الاقواس
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -68,9 +69,14 @@ app.get('/api/test', (req, res) => {
 });
 
 // مسارات API
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/parent', parentRoutes);
-app.use('/api/v1/child', childRoutes);
+// app.use('/api/v1/auth', authRoutes);
+// app.use('/api/v1/parent', parentRoutes);
+// app.use('/api/v1/child', childRoutes);
+// مسارات التطبيق
+app.use('/api/v1/auth', require('./routes/authRoutes'));
+app.use('/api/v1/parent', require('./routes/parentRoutes'));
+app.use('/api/v1/child', require('./routes/childRoutes'));
+
 
 // مسار غير معروف
 app.all('*', (req, res, next) => {
