@@ -58,6 +58,15 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('تم الاتصال بقاعدة البيانات بنجاح'))
   .catch(err => console.error('خطأ في الاتصال بقاعدة البيانات:', err));
 
+// مسار اختباري للتأكد من عمل الخادم
+app.get('/api/test', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: '✅ الخادم يعمل بشكل صحيح',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // مسارات API
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/parent', parentRoutes);
